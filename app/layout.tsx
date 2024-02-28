@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { ModalProvider } from "@/components/providers/modal-provider"
 
 import "./globals.css"
 
@@ -23,6 +24,7 @@ export default function RootLayout({
       		<body className={inter.className}>
 				<ConvexClientProvider>
 					<Toaster />
+					<ModalProvider />
 					{children}
 				</ConvexClientProvider>
 			</body>
