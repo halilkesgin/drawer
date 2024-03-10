@@ -36,12 +36,6 @@ export const LayerPreview = memo(({
             console.warn("Unkown layer type")
             return null
     }
-
-    return (
-        <div>
-
-        </div>
-    )
 })
 
 LayerPreview.displayName = "LayerPreview"
