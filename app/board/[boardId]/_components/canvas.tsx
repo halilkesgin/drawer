@@ -8,7 +8,7 @@ import { Toolbar } from "./toolbar"
 import { Camera, CanvasMode, CanvasState, Color, LayerType, Point, Side, XYWH } from "@/types/canvas"
 import { useCanRedo, useCanUndo, useHistory, useMutation, useOthersMapped, useStorage } from "@/liveblocks.config"
 import { CursorsPresence } from "./cursors-presence"
-import { connectionIdColor, pointerEventToCanvasPoint } from "@/lib/utils"
+import { connectionIdToColor, pointerEventToCanvasPoint, resizeBounds } from "@/lib/utils"
 import { LiveObject } from "@liveblocks/client"
 import { LayerPreview } from "./layer-preview"
 import { SelectionBox } from "./selection-box"
@@ -67,6 +67,28 @@ export const Canvas = ({
         setCanvasState({ mode: CanvasMode.None })
     }, [lastUsedColor])
 
+    const resizeSelectedLayer = useMutation((
+        { storage, self },
+        point: Point
+    ) => {
+        if (canvasState.mode !== CanvasMode.Resizing) {
+            return
+        }
+
+        const bounds = resizeBounds(
+            canvasState.initialBounds,
+            canvasState.corner,
+            point
+        )
+
+        const liveLayers = storage.get("layers")
+        const layer = liveLayers.get(self.presence.selection[0])
+
+        if (layer) {
+            layer.update(bounds)
+        }
+    }, [canvasState])
+
     const onResizeHandlePointerDown = useCallback((
         corner: Side,
         initialBounds: XYWH,
@@ -91,8 +113,16 @@ export const Canvas = ({
 
         const current = pointerEventToCanvasPoint(e, camera)
 
+        if (canvasState.mode === CanvasMode.Resizing) {
+            resizeSelectedLayer(current)
+        }
+
         setMyPresence({ cursor: current })
-    }, [])
+    }, [
+        camera,
+        canvasState,
+        resizeSelectedLayer,
+    ])
 
     const onPointerLeave = useMutation((
         { setMyPresence },
@@ -160,7 +190,7 @@ export const Canvas = ({
             const [connectionId, selection] = user
 
             for (const layerId of selection) {
-                layerIdsToColorSelection[layerId] = connectionIdColor(connectionId)
+                layerIdsToColorSelection[layerId] = connectionIdToColor(connectionId)
             }
         }
 
